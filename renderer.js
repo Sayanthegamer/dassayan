@@ -373,7 +373,8 @@ class SoundManager {
       click: document.getElementById('click-sound'),
       hover: document.getElementById('hover-sound'),
       complete: document.getElementById('complete-sound'),
-      notification: document.getElementById('notification-sound')
+      notification: document.getElementById('notification-sound'),
+      theme: document.getElementById('theme-sound')
     };
     this.enabled = true;
     this.volume = 0.6;
