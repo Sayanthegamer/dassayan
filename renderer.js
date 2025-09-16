@@ -390,6 +390,10 @@ class SoundManager {
   }
 
   play(soundName) {
+    if (!userHasInteracted) {
+      console.log(`[SoundManager] Blocked sound before user interaction: ${soundName}`);
+      return;
+    }
     if (!this.enabled) {
       console.log(`[SoundManager] Sound disabled, not playing: ${soundName}`);
       return;
