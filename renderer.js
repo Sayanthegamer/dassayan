@@ -1,3 +1,7 @@
+// Track if the user has interacted with the page (for sound autoplay)
+let userHasInteracted = false;
+window.addEventListener('click', () => { userHasInteracted = true; }, { once: true });
+window.addEventListener('keydown', () => { userHasInteracted = true; }, { once: true });
 // Week Progress Ring Logic
 document.addEventListener('DOMContentLoaded', () => {
   const circle = document.getElementById('week-progress-circle');
@@ -98,7 +102,7 @@ function renderSchedule(day, isManual = false) {
         card.appendChild(checkmark);
         completedTasks++;
         // Play sound only if not already played for this task
-        if (!completedSoundPlayed.has(taskKey)) {
+        if (!completedSoundPlayed.has(taskKey) && userHasInteracted) {
           soundManager.play('complete');
           completedSoundPlayed.add(taskKey);
         }
