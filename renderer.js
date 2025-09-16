@@ -240,7 +240,9 @@ function initThemeToggle() {
   toggle.addEventListener('change', () => {
     document.body.classList.toggle('dark');
     currentTheme = document.body.classList.contains('dark') ? 'dark' : 'light';
-    soundManager.play('click'); // Play sound on theme switch
+    if (userHasInteracted) {
+      soundManager.play('theme'); // Play a new sound for theme switch
+    }
     console.log('Theme switched to:', currentTheme);
   });
 }
