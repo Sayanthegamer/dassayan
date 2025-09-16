@@ -126,7 +126,7 @@ function renderSchedule(day, isManual = false) {
 function updateStats(day, daySchedule, completedTasks, liveTask) {
   const totalTasks = daySchedule.length;
   const studyTasks = daySchedule.filter(task => 
-    ['maths', 'physics', 'chemistry', 'english', 'bengali'].includes(task.type)
+    ['maths', 'physics', 'chemistry', 'english', 'bengali', 'computer'].includes(task.type)
   );
   
   let totalStudyHours = 0;
@@ -141,7 +141,7 @@ function updateStats(day, daySchedule, completedTasks, liveTask) {
   document.getElementById('study-hours').textContent = Math.round(totalStudyHours) + 'h';
   document.getElementById('completed-tasks').textContent = completedTasks;
   document.getElementById('current-subject').textContent = liveTask ? 
-    liveTask.replace(/📐|📘|🧪|📝|📖|🍽️|🚿|😌|🧘|🚗/g, '').trim().substring(0, 8) + '...' : '—';
+    liveTask.replace(/�|📘|🧪|�|📖|🍽️|🚿|😌|🧘|🚗|💻|🎸/g, '').trim().substring(0, 8) + '...' : '—';
 }
 
 function updateLiveBanner(isManual, liveTask) {
@@ -167,33 +167,64 @@ function updateLiveBanner(isManual, liveTask) {
 
 function parseTimeRange(timeStr, baseDate) {
   if (timeStr.includes('onwards')) return [null, null];
-  
-  if (!timeStr.includes('–') && !timeStr.includes('-')) {
-    const match = timeStr.match(/(\d{1,2}:\d{2} [APM]{2})/i);
-    if (match) {
-      const timePoint = parseTimeString(match[1], baseDate);
-      return [timePoint, new Date(timePoint.getTime() + 30 * 60000)];
+
+  // Try to match both times, allowing the first to be missing AM/PM
+  const rangeMatch = timeStr.match(/(\d{1,2}:\d{2})(?:\s*([APM]{2}))?\s*[–-]\s*(\d{1,2}:\d{2})\s*([APM]{2})/i);
+  if (rangeMatch) {
+    let [, startTime, startPeriod, endTime, endPeriod] = rangeMatch;
+    // If startPeriod is missing, try to infer it
+    if (!startPeriod) {
+      const [startHour, startMin] = startTime.split(':').map(Number);
+      const [endHour, endMin] = endTime.split(':').map(Number);
+      if (endPeriod === 'PM') {
+        if (startHour === 12) {
+          // 12:00 – X PM => 12:00 PM
+          startPeriod = 'PM';
+        } else if (startHour > endHour) {
+          // e.g. 11:30 – 1:30 PM => 11:30 AM – 1:30 PM
+          startPeriod = 'AM';
+        } else {
+          // e.g. 2:00 – 4:30 PM => 2:00 PM – 4:30 PM
+          startPeriod = 'PM';
+        }
+      } else if (endPeriod === 'AM') {
+        if (startHour === 12) {
+          // 12:00 – X AM => 12:00 AM
+          startPeriod = 'AM';
+        } else if (startHour > endHour) {
+          // e.g. 11:30 – 1:30 AM => 11:30 PM – 1:30 AM (overnight)
+          startPeriod = 'PM';
+        } else {
+          // e.g. 6:00 – 8:00 AM => 6:00 AM – 8:00 AM
+          startPeriod = 'AM';
+        }
+      } else {
+        startPeriod = endPeriod;
+      }
     }
-    return [null, null];
+    const start = parseTimeString(startTime + ' ' + startPeriod, baseDate);
+    const end = parseTimeString(endTime + ' ' + endPeriod, baseDate);
+    return [start, end];
   }
-  
-  const match = timeStr.match(/(\d{1,2}:\d{2} [APM]{2})\s*[–-]\s*(\d{1,2}:\d{2} [APM]{2})/i);
-  if (!match) return [null, null];
 
-  const [_, startStr, endStr] = match;
-  const start = parseTimeString(startStr, baseDate);
-  const end = parseTimeString(endStr, baseDate);
-
-  return [start, end];
+  // Single time (point event)
+  const singleMatch = timeStr.match(/(\d{1,2}:\d{2})\s*([APM]{2})/i);
+  if (singleMatch) {
+    const timePoint = parseTimeString(singleMatch[1] + ' ' + singleMatch[2], baseDate);
+    return [timePoint, new Date(timePoint.getTime() + 30 * 60000)];
+  }
+  return [null, null];
 }
 
 function parseTimeString(timeStr, baseDate) {
-  const [time, period] = timeStr.split(' ');
-  let [h, m] = time.split(':').map(Number);
-  
+  // Accepts "h:mm AM/PM" or "h:mmAM/PM"
+  const match = timeStr.match(/(\d{1,2}):(\d{2})\s*([APM]{2})/i);
+  if (!match) return null;
+  let [, h, m, period] = match;
+  h = Number(h);
+  m = Number(m);
   if (period.toUpperCase() === 'PM' && h !== 12) h += 12;
   if (period.toUpperCase() === 'AM' && h === 12) h = 0;
-  
   const date = new Date(baseDate);
   date.setHours(h, m, 0, 0);
   return date;
