@@ -255,7 +255,11 @@ function initDaySelector() {
       btn.classList.add('active');
     }
     btn.addEventListener('click', function() {
-      soundManager.play('click');
+      if (userHasInteracted) {
+        if (userHasInteracted) {
+          soundManager.play('click');
+        }
+      }
       const dayNameSpan = this.querySelector('.day-name');
       if (dayNameSpan) {
         switchDay(dayNameSpan.textContent.trim());
@@ -263,7 +267,9 @@ function initDaySelector() {
     });
     // Add hover sound
     btn.addEventListener('mouseenter', () => {
-      soundManager.play('hover');
+      if (userHasInteracted) {
+        soundManager.play('hover');
+      }
     });
   });
 }
@@ -313,7 +319,9 @@ function initViewOptions() {
     button.addEventListener('click', () => {
       const view = button.dataset.view;
       if (view !== currentView) {
-        soundManager.play('click');
+        if (userHasInteracted) {
+          soundManager.play('click');
+        }
         currentView = view;
         // Update active button
         viewButtons.forEach(btn => btn.classList.remove('active'));
@@ -428,6 +436,8 @@ if (soundToggleBtn) {
   soundToggleBtn.addEventListener('click', () => {
     const enabled = soundManager.toggle();
     soundToggleBtn.classList.toggle('muted', !enabled);
-    soundManager.play('click');
+    if (userHasInteracted) {
+      soundManager.play('click');
+    }
   });
 }
