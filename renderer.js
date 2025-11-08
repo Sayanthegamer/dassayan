@@ -20,10 +20,52 @@ document.addEventListener('DOMContentLoaded', () => {
 // File renamed to renderer.js. This file is now obsolete.
 
 
+// Main container elements
 const scheduleContainer = document.getElementById('schedule-container');
 const liveBanner = document.getElementById('live-now');
+
+// View state
 let currentDay = new Date().toLocaleDateString('en-US', { weekday: 'long' });
 let currentView = 'timeline'; // Track the current view ('timeline' or 'grid')
+
+// Card flip state
+const flippedCards = new Set();
+let isCardFlipping = false;
+
+// Function to get a random Bengali quote
+function getRandomQuote() {
+  const type = Math.random() > 0.5 ? 'motivation' : 'roast';
+  const quotes = bengaliQuotes[type];
+  const quote = quotes[Math.floor(Math.random() * quotes.length)];
+  return { ...quote, type };
+}
+
+const bengaliQuotes = {
+  motivation: [
+    { bengali: "চলতে থাকো, তুমি পারবে!", translation: "Keep going, you can do it!" },
+    { bengali: "প্রতিটি পদক্ষেপ তোমাকে লক্ষ্যের কাছে নিয়ে যাচ্ছে", translation: "Every step brings you closer to your goal" },
+    { bengali: "হাল ছেড়ো না, সফলতা খুব কাছে", translation: "Don't give up, success is near" },
+    { bengali: "তোমার পরিশ্রম কখনো বৃথা যাবে না", translation: "Your hard work will never go to waste" },
+    { bengali: "বিশ্বাস রাখো নিজের উপর", translation: "Believe in yourself" },
+    { bengali: "আজকের কষ্ট, কালের সাফল্য", translation: "Today's struggle, tomorrow's success" },
+    { bengali: "তুমি যা ভাবছো তার চেয়ে শক্তিশালী", translation: "You're stronger than you think" },
+    { bengali: "স্বপ্ন দেখো বড়, পরিশ্রম করো বেশি", translation: "Dream big, work harder" },
+    { bengali: "প্রতিটি মুহূর্ত গুরুত্বপূর্ণ, নষ্ট করো না", translation: "Every moment matters, don't waste it" },
+    { bengali: "তোমার লক্ষ্য তোমার শক্তি", translation: "Your goal is your strength" }
+  ],
+  roast: [
+    { bengali: "পড়াশোনা করো, ফোন ছাড়ো!", translation: "Study more, leave the phone!" },
+    { bengali: "এভাবে চললে JEE তো দূরের কথা!", translation: "At this rate, forget JEE!" },
+    { bengali: "ঘুম কম, পড়া বেশি - এটাই নিয়ম", translation: "Less sleep, more study - that's the rule" },
+    { bengali: "সোশ্যাল মিডিয়া বন্ধ করো, বই খোলো", translation: "Close social media, open books" },
+    { bengali: "সময় নষ্ট করছো নাকি পড়া করছো?", translation: "Wasting time or studying?" },
+    { bengali: "এত আলস্য নিয়ে সফল হবে কীভাবে?", translation: "How will you succeed being so lazy?" },
+    { bengali: "ব্রেক শেষ, এবার পড়তে বসো", translation: "Break's over, time to study" },
+    { bengali: "মনোযোগ দাও, বিভ্রান্ত হয়ো না", translation: "Focus, don't get distracted" },
+    { bengali: "পরীক্ষা কাছে, তুমি কোথায়?", translation: "Exam's near, where are you?" },
+    { bengali: "গল্প কম, পড়াশোনা বেশি করো", translation: "Less chatting, more studying" }
+  ]
+};
 
 // Store theme preference in memory instead of localStorage
 let currentTheme = 'light';
@@ -50,14 +92,13 @@ function switchDay(day) {
 }
 
 function renderSchedule(day, isManual = false) {
-  console.log(`Rendering schedule for: ${day} in ${currentView} view. Manual: ${isManual}`); // Debug log
+  console.log(`Rendering schedule for: ${day} in ${currentView} view. Manual: ${isManual}`);
   
   scheduleContainer.style.opacity = '0.7';
   scheduleContainer.style.transform = 'translateY(10px)';
   
   setTimeout(() => {
     scheduleContainer.innerHTML = '';
-    // Set class based on the current view
     scheduleContainer.className = `schedule-${currentView}`;
 
     if (!window.timetable) {
@@ -70,19 +111,26 @@ function renderSchedule(day, isManual = false) {
       return;
     }
 
-    const now = new Date();
-    let liveTask = null;
-    let completedTasks = 0;
+const now = new Date();
+let liveTask = null;
+let completedTasks = 0;
 
-
-    daySchedule.forEach((entry, index) => {
+daySchedule.forEach((entry, index) => {
       const [start, end] = parseTimeRange(entry.time, now);
       const isCurrent = !isManual && start && end && now >= start && now <= end;
       const isPast = !isManual && end && now > end;
 
       const card = document.createElement('div');
       card.className = `schedule-card ${entry.type}` + (isCurrent ? ' highlight' : '') + (isPast ? ' completed' : '');
-      card.style.animationDelay = `${index * 0.05}s`; // Faster animation for grid
+      card.style.animationDelay = `${index * 0.05}s`;
+      
+      // Create unique card ID
+      const cardId = `card-${day}-${index}`;
+      card.dataset.cardId = cardId;
+
+      // Create card front (existing content)
+      const cardFront = document.createElement('div');
+      cardFront.className = 'card-front';
 
       const header = document.createElement('div');
       header.className = 'card-header';
@@ -92,40 +140,84 @@ function renderSchedule(day, isManual = false) {
       details.className = 'details';
       details.textContent = entry.details;
 
-      // Use a unique key for each task (subject + time)
       const taskKey = `${entry.subject}|${entry.time}`;
 
       if (isPast) {
         const checkmark = document.createElement('div');
         checkmark.className = 'completion-badge';
         checkmark.innerHTML = '✓';
-        card.appendChild(checkmark);
+        cardFront.appendChild(checkmark);
         completedTasks++;
-        // Play sound only if not already played for this task
         if (!completedSoundPlayed.has(taskKey) && userHasInteracted) {
           soundManager.play('complete');
           completedSoundPlayed.add(taskKey);
         }
       }
 
-      card.appendChild(header);
-      if (entry.details) card.appendChild(details);
+      // Add flip hint
+      const flipHint = document.createElement('div');
+      flipHint.className = 'flip-hint';
+      flipHint.textContent = '🔄 Click to flip';
+
+      cardFront.appendChild(header);
+      if (entry.details) cardFront.appendChild(details);
+      cardFront.appendChild(flipHint);
+
+      // Create card back (Bengali quote)
+      const cardBack = document.createElement('div');
+      cardBack.className = 'card-back';
+      
+      const quote = getRandomQuote();
+      
+      cardBack.innerHTML = `
+        <div class="bengali-quote">
+          ${quote.bengali}
+          <div class="quote-translation">${quote.translation}</div>
+        </div>
+        <span class="quote-type ${quote.type}">${quote.type === 'motivation' ? '💪 Motivation' : '🔥 Roast'}</span>
+      `;
+
+      card.appendChild(cardFront);
+      card.appendChild(cardBack);
+
+      // Add click handler for flip
+      card.addEventListener('click', (e) => {
+        // Prevent flipping during animation
+        if (isCardFlipping) return;
+        
+        isCardFlipping = true;
+        const isFlipped = flippedCards.has(cardId);
+        
+        if (isFlipped) {
+          card.classList.remove('flipped');
+          flippedCards.delete(cardId);
+        } else {
+          card.classList.add('flipped');
+          flippedCards.add(cardId);
+        }
+        
+        if (userHasInteracted) {
+          soundManager.play('click');
+        }
+        
+        // Reset flipping flag after animation completes
+        setTimeout(() => {
+          isCardFlipping = false;
+        }, 600);
+      });
+
       scheduleContainer.appendChild(card);
       if (isCurrent) liveTask = entry.subject;
     });
 
-
-
-
     updateLiveBanner(isManual, liveTask);
     updateStats(day, daySchedule, completedTasks, liveTask);
-    setTimeout(() => {
-      scheduleContainer.style.opacity = '1';
-      scheduleContainer.style.transform = 'translateY(0)';
-    }, 100);
-  }, 150);
-}
-
+      setTimeout(() => {
+        scheduleContainer.style.opacity = '1';
+        scheduleContainer.style.transform = 'translateY(0)';
+      }, 100);
+    }, 150);
+  }
 
 function updateStats(day, daySchedule, completedTasks, liveTask) {
   const totalTasks = daySchedule.length;
