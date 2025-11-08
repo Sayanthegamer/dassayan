@@ -177,29 +177,38 @@ daySchedule.forEach((entry, index) => {
         <span class="quote-type ${quote.type}">${quote.type === 'motivation' ? '💪 Motivation' : '🔥 Roast'}</span>
       `;
 
-      card.appendChild(cardFront);
-      card.appendChild(cardBack);
+      // Wrap front/back in flip container that the CSS targets
+      const flipContainer = document.createElement('div');
+      flipContainer.className = 'flip-container';
 
-      // Add click handler for flip
+      const flipCard = document.createElement('div');
+      flipCard.className = 'flip-card';
+
+      flipCard.appendChild(cardFront);
+      flipCard.appendChild(cardBack);
+      flipContainer.appendChild(flipCard);
+      card.appendChild(flipContainer);
+
+      // Add click handler for flip (toggle the flip on the flipContainer)
       card.addEventListener('click', (e) => {
         // Prevent flipping during animation
         if (isCardFlipping) return;
-        
+
         isCardFlipping = true;
         const isFlipped = flippedCards.has(cardId);
-        
+
         if (isFlipped) {
-          card.classList.remove('flipped');
+          flipContainer.classList.remove('flipped');
           flippedCards.delete(cardId);
         } else {
-          card.classList.add('flipped');
+          flipContainer.classList.add('flipped');
           flippedCards.add(cardId);
         }
-        
+
         if (userHasInteracted) {
           soundManager.play('click');
         }
-        
+
         // Reset flipping flag after animation completes
         setTimeout(() => {
           isCardFlipping = false;
