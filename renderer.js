@@ -2,23 +2,6 @@
 let userHasInteracted = false;
 window.addEventListener('click', () => { userHasInteracted = true; }, { once: true });
 window.addEventListener('keydown', () => { userHasInteracted = true; }, { once: true });
-// Week Progress Ring Logic
-document.addEventListener('DOMContentLoaded', () => {
-  const circle = document.getElementById('week-progress-circle');
-  const progressEl = document.getElementById('progress-percent');
-  const weekProgress = 38; // Set to 38% as per description
-  const radius = 40;
-  const circumference = 2 * Math.PI * radius;
-
-  if (circle && progressEl) {
-    circle.setAttribute('stroke-dasharray', circumference);
-    const offset = circumference * (1 - weekProgress / 100); // 38% filled
-    circle.style.strokeDashoffset = offset;
-    progressEl.textContent = weekProgress;
-  }
-});
-// File renamed to renderer.js. This file is now obsolete.
-
 
 // Main container elements (assigned after DOM ready)
 let scheduleContainer = null;
@@ -316,39 +299,38 @@ function parseTimeRange(timeStr, baseDate) {
   if (timeStr.includes('onwards')) return [null, null];
 
   // Try to match both times, allowing the first to be missing AM/PM
-  const rangeMatch = timeStr.match(/(\d{1,2}:\d{2})(?:\s*([APM]{2}))?\s*[–-]\s*(\d{1,2}:\d{2})\s*([APM]{2})/i);
+  const rangeMatch = timeStr.match(/(\d{1,2}:\d{2})(?:\s*([AP]M))?\s*[–—-]\s*(\d{1,2}:\d{2})\s*([AP]M)/i);
   if (rangeMatch) {
     let [, startTime, startPeriod, endTime, endPeriod] = rangeMatch;
-    // If startPeriod is missing, try to infer it
+    
+    // If startPeriod is missing, infer it
     if (!startPeriod) {
-      const [startHour, startMin] = startTime.split(':').map(Number);
-      const [endHour, endMin] = endTime.split(':').map(Number);
-      if (endPeriod === 'PM') {
+      const [startHour] = startTime.split(':').map(Number);
+      const [endHour] = endTime.split(':').map(Number);
+      
+      if (endPeriod.toUpperCase() === 'PM') {
         if (startHour === 12) {
-          // 12:00 – X PM => 12:00 PM
           startPeriod = 'PM';
-        } else if (startHour > endHour) {
-          // e.g. 11:30 – 1:30 PM => 11:30 AM – 1:30 PM
+        } else if (startHour < 12 && startHour < endHour) {
+          startPeriod = 'PM';
+        } else if (startHour < 12 && startHour > endHour) {
           startPeriod = 'AM';
         } else {
-          // e.g. 2:00 – 4:30 PM => 2:00 PM – 4:30 PM
           startPeriod = 'PM';
         }
-      } else if (endPeriod === 'AM') {
+      } else if (endPeriod.toUpperCase() === 'AM') {
         if (startHour === 12) {
-          // 12:00 – X AM => 12:00 AM
           startPeriod = 'AM';
         } else if (startHour > endHour) {
-          // e.g. 11:30 – 1:30 AM => 11:30 PM – 1:30 AM (overnight)
-          startPeriod = 'PM';
+          startPeriod = 'PM'; // overnight case like 11:30 - 1:30 AM
         } else {
-          // e.g. 6:00 – 8:00 AM => 6:00 AM – 8:00 AM
           startPeriod = 'AM';
         }
       } else {
         startPeriod = endPeriod;
       }
     }
+    
     const start = parseTimeString(startTime + ' ' + startPeriod, baseDate);
     const end = parseTimeString(endTime + ' ' + endPeriod, baseDate);
     return [start, end];
@@ -436,10 +418,37 @@ function startLiveUpdates() {
 
 document.addEventListener('DOMContentLoaded', function() {
   console.log('DOM loaded, initializing...');
+  
   // Assign main container elements now that DOM is ready
-  scheduleContainer = document.getElementById('schedule-container');
+  scheduleContainer = document.querySelector('.schedule-grid');
   liveBanner = document.getElementById('live-now');
+  
+  // SAFETY CHECK
+  if (!scheduleContainer) {
+    console.error('schedule-grid element not found!');
+    return;
+  }
+  if (!liveBanner) {
+    console.error('live-now element not found!');
+    return;
+  }
+  
   // Create an ARIA live region for announcements (screen-reader only)
+  if (!document.getElementById('sr-announce')) {
+    const sr = document.createElement('div');
+    sr.id = 'sr-announce';
+    sr.className = 'sr-only';
+    sr.setAttribute('aria-live', 'polite');
+    sr.setAttribute('aria-atomic', 'true');
+    document.body.appendChild(sr);
+  }
+
+  // Check if timetable exists
+  if (!window.timetable) {
+    console.error('Timetable data not loaded!');
+    scheduleContainer.innerHTML = '<div class="error-card">Error: Schedule data failed to load. Please refresh the page.</div>';
+    return;
+  }
   if (!document.getElementById('sr-announce')) {
     const sr = document.createElement('div');
     sr.id = 'sr-announce';
