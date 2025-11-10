@@ -170,7 +170,8 @@
 
 </div>
 
-<!-- Sound Effects -->
+<!-- Sound Effects (temporarily disabled) -->
+<!--
 <audio id="click-sound" preload="auto">
   <source src="sounds/click.wav" type="audio/wav">
 </audio>
@@ -186,7 +187,15 @@
 <audio id="theme-sound" preload="auto">
   <source src="sounds/theme.wav" type="audio/wav">
 </audio>
-<script src="data.js"></script>
-<script src="renderer.js" defer></script>
+-->
+  <script src="data.js"></script>
+  <script>
+    // Ensure timetable is loaded before renderer runs
+    if (typeof timetable === 'undefined') {
+      console.error('Timetable data not loaded!');
+    }
+  </script>
+  <script src="preload.js"></script>
+  <script src="renderer.js"></script>
 </body>
 </html>
