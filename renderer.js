@@ -20,9 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
 // File renamed to renderer.js. This file is now obsolete.
 
 
-// Main container elements
-const scheduleContainer = document.getElementById('schedule-container');
-const liveBanner = document.getElementById('live-now');
+// Main container elements (assigned after DOM ready)
+let scheduleContainer = null;
+let liveBanner = null;
 
 // View state
 let currentDay = new Date().toLocaleDateString('en-US', { weekday: 'long' });
@@ -93,7 +93,12 @@ function switchDay(day) {
 
 function renderSchedule(day, isManual = false) {
   console.log(`Rendering schedule for: ${day} in ${currentView} view. Manual: ${isManual}`);
-  
+  // Guard: ensure DOM container is present
+  if (!scheduleContainer) {
+    console.warn('renderSchedule called before scheduleContainer is available');
+    return;
+  }
+
   scheduleContainer.style.opacity = '0.7';
   scheduleContainer.style.transform = 'translateY(10px)';
   
@@ -167,7 +172,11 @@ daySchedule.forEach((entry, index) => {
       const cardBack = document.createElement('div');
       cardBack.className = 'card-back';
       
-      const quote = getRandomQuote();
+  const quote = getRandomQuote();
+  // Store quote info on the card for later announcements
+  card.dataset.quoteType = quote.type;
+  card.dataset.quoteBengali = quote.bengali;
+  card.dataset.quoteTranslation = quote.translation;
       
       cardBack.innerHTML = `
         <div class="bengali-quote">
@@ -177,19 +186,16 @@ daySchedule.forEach((entry, index) => {
         <span class="quote-type ${quote.type}">${quote.type === 'motivation' ? '💪 Motivation' : '🔥 Roast'}</span>
       `;
 
-      // Wrap front/back in flip container that the CSS targets
-      const flipContainer = document.createElement('div');
-      flipContainer.className = 'flip-container';
+      // Append front/back directly to the card (CSS targets .schedule-card.flipped)
+      card.appendChild(cardFront);
+      card.appendChild(cardBack);
 
-      const flipCard = document.createElement('div');
-      flipCard.className = 'flip-card';
+      // Make card keyboard-focusable and accessible
+      card.tabIndex = 0;
+      card.setAttribute('role', 'button');
+      card.setAttribute('aria-pressed', 'false');
 
-      flipCard.appendChild(cardFront);
-      flipCard.appendChild(cardBack);
-      flipContainer.appendChild(flipCard);
-      card.appendChild(flipContainer);
-
-      // Add click handler for flip (toggle the flip on the flipContainer)
+  // Add click handler for flip (toggle the flip class on the schedule card)
       card.addEventListener('click', (e) => {
         // Prevent flipping during animation
         if (isCardFlipping) return;
@@ -198,21 +204,55 @@ daySchedule.forEach((entry, index) => {
         const isFlipped = flippedCards.has(cardId);
 
         if (isFlipped) {
-          flipContainer.classList.remove('flipped');
+          card.classList.remove('flipped');
           flippedCards.delete(cardId);
+          card.setAttribute('aria-pressed', 'false');
         } else {
-          flipContainer.classList.add('flipped');
+          card.classList.add('flipped');
           flippedCards.add(cardId);
+          card.setAttribute('aria-pressed', 'true');
         }
 
         if (userHasInteracted) {
           soundManager.play('click');
         }
 
+        // Announce to screen readers which quote is now visible
+        try {
+          const sr = document.getElementById('sr-announce');
+          if (sr) {
+            const t = card.dataset.quoteType || '';
+            const trans = card.dataset.quoteTranslation || '';
+            const label = t === 'motivation' ? 'Motivation' : (t === 'roast' ? 'Roast' : 'Quote');
+            sr.textContent = `${label} shown. ${trans}`;
+          }
+        } catch (err) {
+          // harmless
+        }
+
         // Reset flipping flag after animation completes
         setTimeout(() => {
           isCardFlipping = false;
         }, 600);
+      });
+
+      // Keyboard support: Enter or Space flips the card
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          card.click();
+        }
+      });
+
+      // Focus visual helpers (add small focus ring) — removed on blur
+      card.addEventListener('focus', () => {
+        // store original and apply focus style
+        card.dataset._origBoxShadow = card.style.boxShadow || '';
+        card.style.boxShadow = '0 0 0 4px rgba(99,102,241,0.12), var(--shadow-lg)';
+      });
+      card.addEventListener('blur', () => {
+        card.style.boxShadow = card.dataset._origBoxShadow || '';
+        delete card.dataset._origBoxShadow;
       });
 
       scheduleContainer.appendChild(card);
@@ -242,14 +282,25 @@ function updateStats(day, daySchedule, completedTasks, liveTask) {
     }
   });
 
-  document.getElementById('total-tasks').textContent = totalTasks;
-  document.getElementById('study-hours').textContent = Math.round(totalStudyHours) + 'h';
-  document.getElementById('completed-tasks').textContent = completedTasks;
-  document.getElementById('current-subject').textContent = liveTask ? 
-    liveTask.replace(/�|📘|🧪|�|📖|🍽️|🚿|😌|🧘|🚗|💻|🎸/g, '').trim().substring(0, 8) + '...' : '—';
+  const totalTasksEl = document.getElementById('total-tasks');
+  if (totalTasksEl) totalTasksEl.textContent = totalTasks;
+
+  const studyHoursEl = document.getElementById('study-hours');
+  if (studyHoursEl) studyHoursEl.textContent = Math.round(totalStudyHours) + 'h';
+
+  const completedTasksEl = document.getElementById('completed-tasks');
+  if (completedTasksEl) completedTasksEl.textContent = completedTasks;
+
+  const currentSubjectEl = document.getElementById('current-subject');
+  if (currentSubjectEl) {
+    currentSubjectEl.textContent = liveTask ? 
+      liveTask.replace(/�|📘|🧪|�|📖|🍽️|🚿|😌|🧘|🚗|💻|🎸/g, '').trim().substring(0, 8) + '...' : '—';
+  }
 }
 
 function updateLiveBanner(isManual, liveTask) {
+  if (!liveBanner) return; // Bail out if banner missing
+
   if (!isManual) {
     liveBanner.innerHTML = liveTask ? `Live Now: ${liveTask}` : 'Live Now: —';
   } else {
@@ -337,6 +388,7 @@ function parseTimeString(timeStr, baseDate) {
 
 function initThemeToggle() {
   const toggle = document.getElementById('theme-toggle');
+  if (!toggle) return;
   currentTheme = 'light';
   toggle.addEventListener('change', () => {
     document.body.classList.toggle('dark');
@@ -393,6 +445,27 @@ function startLiveUpdates() {
 
 document.addEventListener('DOMContentLoaded', function() {
   console.log('DOM loaded, initializing...');
+  // Assign main container elements now that DOM is ready
+  scheduleContainer = document.getElementById('schedule-container');
+  liveBanner = document.getElementById('live-now');
+  // Create an ARIA live region for announcements (screen-reader only)
+  if (!document.getElementById('sr-announce')) {
+    const sr = document.createElement('div');
+    sr.id = 'sr-announce';
+    sr.setAttribute('aria-live', 'polite');
+    sr.setAttribute('aria-atomic', 'true');
+    // Visually hide but remain accessible
+    sr.style.position = 'absolute';
+    sr.style.width = '1px';
+    sr.style.height = '1px';
+    sr.style.margin = '-1px';
+    sr.style.border = '0';
+    sr.style.padding = '0';
+    sr.style.overflow = 'hidden';
+    sr.style.clip = 'rect(0 0 0 0)';
+    sr.style.whiteSpace = 'nowrap';
+    document.body.appendChild(sr);
+  }
   initCurrentDate();
   setTimeout(() => {
     console.log('Timetable available:', !!window.timetable);
