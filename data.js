@@ -6,7 +6,7 @@ const timetable = {
     { time: "9:15 – 9:30 AM", subject: "🍽️ Breakfast + Light Phone Check", details: "", type: "break" },
     { time: "9:30 – 11:30 AM", subject: "📐 Math Problem Solving", details: "", type: "maths" },
     { time: "11:30 – 12:00 PM", subject: "📱 Mobile Break / Stretch", details: "", type: "break" },
-    { time: "12:00 – 1:30 PM", subject: "📝 English Revision", details: "", type: "english" },
+    { time: "12:00 – 1:30 PM", subject: "� English Revision", details: "", type: "english" },
     { time: "1:30 – 2:00 PM", subject: "🍽️ Lunch", details: "", type: "break" },
     { time: "2:00 – 4:00 PM", subject: "📘 Physics Self-Study", details: "", type: "physics" },
     { time: "4:00 – 4:30 PM", subject: "📱 Short Mobile Break / Snack", details: "", type: "break" },
