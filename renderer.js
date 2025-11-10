@@ -244,16 +244,7 @@ daySchedule.forEach((entry, index) => {
         }
       });
 
-      // Focus visual helpers (add small focus ring) — removed on blur
-      card.addEventListener('focus', () => {
-        // store original and apply focus style
-        card.dataset._origBoxShadow = card.style.boxShadow || '';
-        card.style.boxShadow = '0 0 0 4px rgba(99,102,241,0.12), var(--shadow-lg)';
-      });
-      card.addEventListener('blur', () => {
-        card.style.boxShadow = card.dataset._origBoxShadow || '';
-        delete card.dataset._origBoxShadow;
-      });
+      // Rely on CSS :focus-visible for focus styles (no inline handlers)
 
       scheduleContainer.appendChild(card);
       if (isCurrent) liveTask = entry.subject;
@@ -452,18 +443,9 @@ document.addEventListener('DOMContentLoaded', function() {
   if (!document.getElementById('sr-announce')) {
     const sr = document.createElement('div');
     sr.id = 'sr-announce';
+    sr.className = 'sr-only';
     sr.setAttribute('aria-live', 'polite');
     sr.setAttribute('aria-atomic', 'true');
-    // Visually hide but remain accessible
-    sr.style.position = 'absolute';
-    sr.style.width = '1px';
-    sr.style.height = '1px';
-    sr.style.margin = '-1px';
-    sr.style.border = '0';
-    sr.style.padding = '0';
-    sr.style.overflow = 'hidden';
-    sr.style.clip = 'rect(0 0 0 0)';
-    sr.style.whiteSpace = 'nowrap';
     document.body.appendChild(sr);
   }
   initCurrentDate();
