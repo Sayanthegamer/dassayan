@@ -285,7 +285,7 @@ function updateStats(day, daySchedule, completedTasks, liveTask) {
   const currentSubjectEl = document.getElementById('current-subject');
   if (currentSubjectEl) {
     currentSubjectEl.textContent = liveTask ? 
-      liveTask.replace(/�|📘|🧪|�|📖|🍽️|🚿|😌|🧘|🚗|💻|🎸/g, '').trim().substring(0, 8) + '...' : '—';
+      liveTask.replace(/[��📘🧪📕📖🍽️🚿😌🧘🚗💻🎸📱]/g, '').trim().substring(0, 8) + '...' : '—';
   }
 }
 
