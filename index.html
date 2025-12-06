@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,10 +10,13 @@
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
   <!-- Bengali font for better Bengali quote rendering -->
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;600;700&display=swap"
+    rel="stylesheet">
 </head>
+
 <body>
   <div style="position: fixed; top: 0; left: 0; background: red; color: white; padding: 10px; z-index: 9999;">
     CSS Test - If you see this in red, HTML works but CSS might not be loading
@@ -64,12 +68,13 @@
         <span class="day-arrow">→</span>
       </button>
     </div>
-    
+
     <div class="sidebar-footer">
       <div class="progress-ring">
         <svg id="week-progress-svg" width="110" height="110">
           <circle cx="55" cy="55" r="45" stroke="#e0e7ff" stroke-width="8" fill="none" />
-          <circle id="week-progress-circle" cx="55" cy="55" r="45" stroke="#6366f1" stroke-width="8" fill="none" stroke-dasharray="282.7" stroke-dashoffset="176.1" />
+          <circle id="week-progress-circle" cx="55" cy="55" r="45" stroke="#6366f1" stroke-width="8" fill="none"
+            stroke-dasharray="282.7" stroke-dashoffset="176.1" />
         </svg>
         <div class="ring-text">
           <div id="progress-percent">38</div>
@@ -80,15 +85,15 @@
         <button id="sound-toggle-btn" class="sound-btn" title="Toggle Sound Effects"></button>
       </div>
     </div>
-      
-      <div class="credits-section">
-        <div class="credits-title">Made with ❤️</div>
-        <div class="credits-content">
-          <div class="credits-name">Sayan Das</div>
-          <div class="credits-helper">with help of <span class="credits-claude">Claude</span></div>
-        </div>
+
+    <div class="credits-section">
+      <div class="credits-title">Made with ❤️</div>
+      <div class="credits-content">
+        <div class="credits-name">Sayan Das</div>
+        <div class="credits-helper">with help of <span class="credits-claude">Claude</span></div>
       </div>
     </div>
+  </div>
   </div>
 
   <div class="main-content">
@@ -121,7 +126,7 @@
         </div>
       </div>
     </div>
-    
+
     <div class="stats-grid">
       <div class="stat-card primary">
         <div class="stat-icon">📊</div>
@@ -168,10 +173,10 @@
     </div>
   </div>
 
-</div>
+  </div>
 
-<!-- Sound Effects (temporarily disabled) -->
-<!--
+  <!-- Sound Effects (temporarily disabled) -->
+  <!--
 <audio id="click-sound" preload="auto">
   <source src="sounds/click.wav" type="audio/wav">
 </audio>
@@ -195,7 +200,8 @@
       console.error('Timetable data not loaded!');
     }
   </script>
-  <script src="preload.js"></script>
+
   <script src="renderer.js"></script>
 </body>
+
 </html>

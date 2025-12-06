@@ -59,12 +59,12 @@ const completedSoundPlayed = new Set();
 function switchDay(day) {
   console.log('Switching to day:', day); // Debug log
   currentDay = day;
-  
+
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
   const isManual = day !== today;
-  
+
   renderSchedule(day, isManual);
-  
+
   document.querySelectorAll('.day-selector button').forEach(btn => {
     btn.classList.remove('active');
     const dayNameSpan = btn.querySelector('.day-name');
@@ -84,7 +84,7 @@ function renderSchedule(day, isManual = false) {
 
   scheduleContainer.style.opacity = '0.7';
   scheduleContainer.style.transform = 'translateY(10px)';
-  
+
   setTimeout(() => {
     scheduleContainer.innerHTML = '';
     scheduleContainer.className = `schedule-${currentView}`;
@@ -99,11 +99,11 @@ function renderSchedule(day, isManual = false) {
       return;
     }
 
-const now = new Date();
-let liveTask = null;
-let completedTasks = 0;
+    const now = new Date();
+    let liveTask = null;
+    let completedTasks = 0;
 
-daySchedule.forEach((entry, index) => {
+    daySchedule.forEach((entry, index) => {
       const [start, end] = parseTimeRange(entry.time, now);
       const isCurrent = !isManual && start && end && now >= start && now <= end;
       const isPast = !isManual && end && now > end;
@@ -111,7 +111,7 @@ daySchedule.forEach((entry, index) => {
       const card = document.createElement('div');
       card.className = `schedule-card ${entry.type}` + (isCurrent ? ' highlight' : '') + (isPast ? ' completed' : '');
       card.style.animationDelay = `${index * 0.05}s`;
-      
+
       // Create unique card ID
       const cardId = `card-${day}-${index}`;
       card.dataset.cardId = cardId;
@@ -154,13 +154,13 @@ daySchedule.forEach((entry, index) => {
       // Create card back (Bengali quote)
       const cardBack = document.createElement('div');
       cardBack.className = 'card-back';
-      
-  const quote = getRandomQuote();
-  // Store quote info on the card for later announcements
-  card.dataset.quoteType = quote.type;
-  card.dataset.quoteBengali = quote.bengali;
-  card.dataset.quoteTranslation = quote.translation;
-      
+
+      const quote = getRandomQuote();
+      // Store quote info on the card for later announcements
+      card.dataset.quoteType = quote.type;
+      card.dataset.quoteBengali = quote.bengali;
+      card.dataset.quoteTranslation = quote.translation;
+
       cardBack.innerHTML = `
         <div class="bengali-quote">
           ${quote.bengali}
@@ -178,7 +178,7 @@ daySchedule.forEach((entry, index) => {
       card.setAttribute('role', 'button');
       card.setAttribute('aria-pressed', 'false');
 
-  // Add click handler for flip (toggle the flip class on the schedule card)
+      // Add click handler for flip (toggle the flip class on the schedule card)
       card.addEventListener('click', (e) => {
         // Prevent flipping during animation
         if (isCardFlipping) return;
@@ -235,19 +235,19 @@ daySchedule.forEach((entry, index) => {
 
     updateLiveBanner(isManual, liveTask);
     updateStats(day, daySchedule, completedTasks, liveTask);
-      setTimeout(() => {
-        scheduleContainer.style.opacity = '1';
-        scheduleContainer.style.transform = 'translateY(0)';
-      }, 100);
-    }, 150);
-  }
+    setTimeout(() => {
+      scheduleContainer.style.opacity = '1';
+      scheduleContainer.style.transform = 'translateY(0)';
+    }, 100);
+  }, 150);
+}
 
 function updateStats(day, daySchedule, completedTasks, liveTask) {
   const totalTasks = daySchedule.length;
-  const studyTasks = daySchedule.filter(task => 
+  const studyTasks = daySchedule.filter(task =>
     ['maths', 'physics', 'chemistry', 'english', 'bengali', 'computer'].includes(task.type)
   );
-  
+
   let totalStudyHours = 0;
   studyTasks.forEach(task => {
     const [start, end] = parseTimeRange(task.time, new Date());
@@ -267,7 +267,7 @@ function updateStats(day, daySchedule, completedTasks, liveTask) {
 
   const currentSubjectEl = document.getElementById('current-subject');
   if (currentSubjectEl) {
-    currentSubjectEl.textContent = liveTask ? 
+    currentSubjectEl.textContent = liveTask ?
       liveTask.replace(/[��📘🧪📕📖🍽️🚿😌🧘🚗💻🎸📱]/g, '').trim().substring(0, 8) + '...' : '—';
   }
 }
@@ -290,7 +290,7 @@ function updateLiveBanner(isManual, liveTask) {
         break;
       }
     }
-    
+
     liveBanner.innerHTML = todayLiveTask ? `Live Now: ${todayLiveTask}` : 'Live Now: —';
   }
 }
@@ -302,12 +302,12 @@ function parseTimeRange(timeStr, baseDate) {
   const rangeMatch = timeStr.match(/(\d{1,2}:\d{2})(?:\s*([AP]M))?\s*[–—-]\s*(\d{1,2}:\d{2})\s*([AP]M)/i);
   if (rangeMatch) {
     let [, startTime, startPeriod, endTime, endPeriod] = rangeMatch;
-    
+
     // If startPeriod is missing, infer it
     if (!startPeriod) {
       const [startHour] = startTime.split(':').map(Number);
       const [endHour] = endTime.split(':').map(Number);
-      
+
       if (endPeriod.toUpperCase() === 'PM') {
         if (startHour === 12) {
           startPeriod = 'PM';
@@ -330,7 +330,7 @@ function parseTimeRange(timeStr, baseDate) {
         startPeriod = endPeriod;
       }
     }
-    
+
     const start = parseTimeString(startTime + ' ' + startPeriod, baseDate);
     const end = parseTimeString(endTime + ' ' + endPeriod, baseDate);
     return [start, end];
@@ -380,11 +380,9 @@ function initDaySelector() {
     if (dayNameSpan && dayNameSpan.textContent.trim() === currentDay) {
       btn.classList.add('active');
     }
-    btn.addEventListener('click', function() {
+    btn.addEventListener('click', function () {
       if (userHasInteracted) {
-        if (userHasInteracted) {
-          soundManager.play('click');
-        }
+        soundManager.play('click');
       }
       const dayNameSpan = this.querySelector('.day-name');
       if (dayNameSpan) {
@@ -416,13 +414,13 @@ function startLiveUpdates() {
   }, 60000);
 }
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   console.log('DOM loaded, initializing...');
-  
+
   // Assign main container elements now that DOM is ready
   scheduleContainer = document.querySelector('.schedule-grid');
   liveBanner = document.getElementById('live-now');
-  
+
   // SAFETY CHECK
   if (!scheduleContainer) {
     console.error('schedule-grid element not found!');
@@ -432,7 +430,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.error('live-now element not found!');
     return;
   }
-  
+
   // Create an ARIA live region for announcements (screen-reader only)
   if (!document.getElementById('sr-announce')) {
     const sr = document.createElement('div');
@@ -449,14 +447,7 @@ document.addEventListener('DOMContentLoaded', function() {
     scheduleContainer.innerHTML = '<div class="error-card">Error: Schedule data failed to load. Please refresh the page.</div>';
     return;
   }
-  if (!document.getElementById('sr-announce')) {
-    const sr = document.createElement('div');
-    sr.id = 'sr-announce';
-    sr.className = 'sr-only';
-    sr.setAttribute('aria-live', 'polite');
-    sr.setAttribute('aria-atomic', 'true');
-    document.body.appendChild(sr);
-  }
+
   initCurrentDate();
   setTimeout(() => {
     console.log('Timetable available:', !!window.timetable);
